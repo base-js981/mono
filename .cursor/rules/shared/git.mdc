@@ -1,0 +1,65 @@
+---
+alwaysApply: true
+---
+
+## Git Workflow & Conventions
+
+### Branch Strategy
+
+- Default branch: `main` (protected).
+- Feature branches: `feat/<scope>-<short-summary>`.
+- Fix branches: `fix/<scope>-<short-summary>`.
+- Chore/Refactor branches: `chore/<scope>-<short-summary>`, `refactor/<scope>-<short-summary>`.
+- Release branches: `release/<version>`.
+- Hotfix branches: `hotfix/<version>-<short-summary>`.
+
+### Commit Messages (Conventional Commits)
+
+- Format: `<type>(<scope>): <summary>`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+- Keep summary ≤ 72 chars; use imperative mood.
+- Body: explain why, not what; reference issues.
+- Footer: `BREAKING CHANGE:` and `Closes #123` when applicable.
+
+### Pull Requests
+
+- Small, focused PRs (≤ 400 lines changed) with clear description.
+- Link related issues and provide context, screenshots for UI.
+- Checklist: tests added/updated, docs updated, lint passes.
+- Require at least one approval; no self-merge without review.
+
+### Code Reviews
+
+- Review for correctness, readability, tests, and security implications.
+- Prefer suggestions with rationale; be respectful and constructive.
+- Authors address all comments or justify decisions.
+
+### Versioning & Releases
+
+- Semantic Versioning: `MAJOR.MINOR.PATCH`.
+- Auto-generate changelog from Conventional Commits.
+- Tag releases: `v<version>`; ensure build artifacts are reproducible.
+
+### CI/CD Integration
+
+- Run lint, type-check, tests, and build on PRs.
+- Block merge on failures; require green CI.
+- Use protected branches and required status checks.
+
+### Repository Hygiene
+
+- Use `.gitignore` thoroughly; avoid committing generated files or secrets.
+- Keep PRs rebased; avoid merge commits in feature branches.
+- Squash merge PRs to keep history clean (unless release/hotfix).
+
+### Monorepo (if applicable)
+
+- Scope commits and branches by package.
+- Use workspaces tooling for scripts and dependency management.
+
+### Security & Compliance
+
+- Never commit secrets; rotate if leaked. Use secret scanning.
+- Sign commits and tags if required.
+- Enforce CODEOWNERS for critical paths.
+

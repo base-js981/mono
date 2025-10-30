@@ -1,0 +1,109 @@
+---
+alwaysApply: true
+---
+
+## NestJS API Rules
+
+### Architecture & Modules
+
+- Use modular architecture; each domain gets its own module.
+- One controller per main route; secondary routes can use additional controllers.
+- Each module must contain: `controller`, `service`, `dtos`, and (if needed) `providers`.
+- Extract cross-cutting concerns to a `core` module (filters, guards, interceptors, pipes, middlewares).
+- Extract reusable logic to a `shared` module (utilities, adapters, common services).
+- Keep services stateless; avoid storing request-specific state in singletons.
+
+### Controllers
+
+- Keep controllers thin: validation, transformation, and delegating to services.
+- Use DTOs for all inputs; never accept raw objects.
+- Return typed outputs (classes or interfaces) with minimal fields required.
+- Handle versioning with `@Version('1')` or URI prefix per app strategy.
+- Apply guards at controller level for default security; override per-route if needed.
+
+### Services
+
+- Encapsulate business logic; no HTTP concerns in services.
+- Interact with persistence through repositories/Prisma client injected via providers.
+- Use transactions for multi-step writes with `prisma.$transaction`.
+- Avoid long-running operations; offload to queues or schedulers when needed.
+
+### DTOs & Validation
+
+- Define DTO classes with `class-validator` decorators for all inputs.
+- Use `class-transformer` (e.g., `@Type`) where necessary for nested objects and dates.
+- Use whitelisting and forbidding non-whitelisted properties globally.
+- Sanitize inputs where applicable (e.g., trimming strings).
+
+### Pipes, Guards, Interceptors, Filters
+
+- Pipes: ValidationPipe globally with `{ whitelist: true, forbidNonWhitelisted: true, transform: true }`.
+- Guards: JWT auth and RBAC (`RolesGuard`) applied at route/controller level as required.
+- Interceptors: Logging, timeout, response mapping, and class-serializer where suitable.
+- Filters: Global exception filter to standardize error responses without leaking internals.
+
+### Configuration & Environment
+
+- Use `@nestjs/config` with schema validation (e.g., Joi) for env vars.
+- Never access `process.env` directly in business logic; inject ConfigService.
+- Separate configs per environment; default secure values in production.
+
+### Logging & Monitoring
+
+- Use NestJS Logger or a structured logger (e.g., pino) via an injected provider.
+- Log request start/end, errors, and important business events without sensitive data.
+- Correlate logs with request identifiers when available.
+
+### Error Handling
+
+- Throw HTTP exceptions with precise status codes; avoid generic 500s unless unexpected.
+- Add context when rethrowing errors; do not expose stack traces to clients.
+- Map domain errors to HTTP errors in controllers or exception filters.
+
+### API Docs (Swagger)
+
+- Use `@nestjs/swagger` for OpenAPI documentation.
+- Document DTOs, responses, and error models.
+- Hide sensitive/internal endpoints; secure Swagger in non-local environments.
+
+### Versioning & Deprecation
+
+- Enable API versioning (URI or header-based) and document per-route versions.
+- Deprecate old versions with clear timelines and behavior; add warnings headers.
+
+### Caching & Rate Limiting
+
+- Use Nest cache module or external cache (Redis) for heavy read paths.
+- Apply route-level caching where safe; avoid caching personalized data unless keyed.
+- Apply rate limiting per IP/user; stricter for auth-sensitive routes.
+
+### Prisma Integration
+
+- Use PrismaClient as a singleton provider; avoid creating clients per request.
+- Scope queries via select/include to fetch only needed fields.
+- Implement repositories or service-level methods; avoid Prisma calls in controllers.
+- Handle unique constraint errors and map to 409 Conflict where applicable.
+
+### Security (Backend-specific)
+
+- Apply `JwtAuthGuard` and `RolesGuard` consistently on protected routes.
+- Validate and sanitize all inputs before persistence.
+- Enforce CORS, HTTPS, security headers; avoid wildcard origins in production.
+
+### Scheduling & Queues
+
+- Use `@nestjs/schedule` for cron-like tasks; keep jobs idempotent and short.
+- Use a queue (e.g., Bull) for long-running/background tasks; retry with backoff.
+
+### Testing
+
+- Unit test all services and controllers (happy-path and edge cases).
+- Use testing module with mocked providers and Prisma test client.
+- Write E2E tests per API module; seed deterministic test data.
+
+### Project Conventions
+
+- Use English for code and documentation.
+- Use PascalCase for classes; camelCase for variables/functions; kebab-case for files.
+- Export only one symbol per file.
+- Keep functions short (< 20 instructions) and focused on a single responsibility.

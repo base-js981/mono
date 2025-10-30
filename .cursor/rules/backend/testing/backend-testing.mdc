@@ -1,0 +1,91 @@
+---
+alwaysApply: true
+---
+
+## Backend Testing Rules (NestJS)
+
+### Testing Stack
+
+- Use Jest as the test runner and assertion library.
+- Use `@nestjs/testing` to create testing modules.
+- Use `supertest` for E2E HTTP tests (separate doc if needed).
+
+### General Principles
+
+- Follow Arrange-Act-Assert for test structure.
+- Name variables clearly: `inputX`, `mockX`, `actualX`, `expectedX`.
+- Make tests deterministic; avoid relying on time or randomness. Mock timers.
+- Each test should assert one behavior; prefer multiple small tests over one large test.
+- Avoid testing implementation details; test observable behavior and contracts.
+
+### Unit Tests
+
+- Use `Test.createTestingModule` to isolate the unit under test.
+- Mock dependencies using providers with `useValue` or `useFactory`.
+- Use strict, typed mocks with exhaustive method coverage.
+- Verify interactions with dependencies with explicit expectations.
+- Avoid real I/O (DB, network, filesystem). Use in-memory doubles.
+
+### Services
+
+- Test business logic branches, edge cases, and error handling.
+- Mock Prisma/repositories; assert correct queries/transactions are called.
+- When using transactions, verify `prisma.$transaction` boundaries.
+
+### Controllers
+
+- Test only routing logic: validation, mapping, and service delegation.
+- Mock services; assert correct service methods are called with validated DTOs.
+- Map domain and infrastructure errors to appropriate HTTP exceptions.
+
+### Pipes, Guards, Interceptors, Filters
+
+- Test custom pipes with valid/invalid inputs.
+- Test guards with various auth/role scenarios.
+- Test interceptors for logging, timeout, mapping.
+- Test filters to ensure standardized error responses.
+
+### DTO Validation
+
+- Validate DTOs using `class-validator` with `validateSync`.
+- Cover happy path and all constraint violations (min/max/format/enums).
+
+### Fixtures & Factories
+
+- Create factory functions for common entities and DTOs.
+- Keep factories in a shared `test/factories` folder.
+- Do not reuse production seeds in tests; keep test data minimal and explicit.
+
+### Mocks & Spies
+
+- Prefer typed mocks over `jest.fn()` where possible.
+- Reset and restore mocks between tests with `afterEach(jest.resetAllMocks)`.
+- Use `jest.useFakeTimers()` for time-dependent logic; restore after.
+
+### Test Organization
+
+- Mirror source structure under `test/`.
+- One spec per unit under test; name `*.spec.ts`.
+- Group tests with `describe` blocks and use clear `it` descriptions.
+
+### Performance & Isolation
+
+- Keep unit tests fast; avoid spinning Nest app unless necessary.
+- Do not share state across tests; use fresh module instances per test file.
+
+### Coverage & Quality Gates
+
+- Minimum coverage thresholds: branches 80%, lines 85%.
+- Add coverage for critical paths: auth, payments, persistence.
+
+### E2E (Pointer)
+
+- E2E tests live under `test/e2e` with app bootstrap and teardown.
+- Use a separate test database; reset with `prisma migrate reset` between suites.
+- Seed minimal deterministic data for scenarios.
+
+### CI Integration
+
+- Run unit tests in CI with `--runInBand` for reliability.
+- Upload coverage reports; fail build if below thresholds.
+

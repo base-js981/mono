@@ -1,0 +1,188 @@
+---
+alwaysApply: true
+---
+
+## Backend Security Rules
+
+### Authentication & Authorization
+
+- **JWT Token Management**
+  - Use access tokens with short expiration (15-30 minutes)
+  - Implement refresh tokens with longer expiration (7-30 days)
+  - Store refresh tokens securely (httpOnly cookies or secure storage)
+  - Implement token rotation for refresh tokens
+  - Always validate token signature and expiration
+
+- **Role-Based Access Control (RBAC)**
+  - Define clear user roles (admin, user, guest, etc.)
+  - Use Guards for route protection: `@UseGuards(JwtAuthGuard, RolesGuard)`
+  - Implement role decorators: `@Roles('admin', 'user')`
+  - Check permissions at both route and resource level
+  - Use enum for role definitions to avoid typos
+
+- **Password Security**
+  - Use bcrypt with salt rounds >= 12
+  - Enforce password policies (min 8 chars, mixed case, numbers, symbols)
+  - Implement password history to prevent reuse
+  - Use secure password reset with time-limited tokens
+  - Never log or store passwords in plain text
+
+- **Session Management**
+  - Implement proper logout (invalidate tokens)
+  - Use secure session storage
+  - Implement session timeout
+  - Handle concurrent sessions appropriately
+
+### Input Validation & Sanitization
+
+- **DTO Validation**
+  - Use class-validator decorators for all inputs
+  - Validate data types, formats, and constraints
+  - Implement custom validators for business rules
+  - Use transform decorators to sanitize data
+  - Reject requests with invalid data immediately
+
+- **SQL Injection Prevention**
+  - Use parameterized queries only
+  - Never concatenate user input into SQL queries
+  - Use ORM query builders instead of raw SQL
+  - Validate and escape special characters
+  - Use database connection pooling securely
+
+- **XSS Protection**
+  - Sanitize all user inputs
+  - Use Content Security Policy (CSP) headers
+  - Escape HTML entities in responses
+  - Validate file uploads (type, size, content)
+  - Use whitelist approach for allowed content
+
+- **Rate Limiting**
+  - Implement rate limiting per IP/user
+  - Use different limits for different endpoints
+  - Implement exponential backoff for failed attempts
+  - Log and monitor rate limit violations
+  - Use Redis for distributed rate limiting
+
+### API Security
+
+- **CORS Configuration**
+  - Configure specific allowed origins
+  - Use environment-specific CORS settings
+  - Implement preflight request handling
+  - Restrict allowed methods and headers
+  - Never use wildcard (*) in production
+
+- **HTTPS Enforcement**
+  - Force HTTPS in production
+  - Use HSTS headers
+  - Implement certificate pinning for mobile apps
+  - Redirect HTTP to HTTPS
+  - Use secure cookies only
+
+- **Request/Response Security**
+  - Implement request size limits
+  - Use compression carefully (avoid BREACH)
+  - Add security headers (X-Frame-Options, X-Content-Type-Options)
+  - Implement proper error handling (don't leak sensitive info)
+  - Log security events without sensitive data
+
+- **API Versioning Security**
+  - Deprecate old versions securely
+  - Maintain backward compatibility
+  - Document security changes in version notes
+  - Implement gradual migration strategies
+
+### Database Security
+
+- **Connection Security**
+  - Use encrypted connections (SSL/TLS)
+  - Implement connection pooling with limits
+  - Use least privilege database users
+  - Rotate database credentials regularly
+  - Monitor database access patterns
+
+- **Query Security**
+  - Use prepared statements exclusively
+  - Implement query timeout limits
+  - Monitor slow queries and unusual patterns
+  - Use read replicas for read operations
+  - Implement database-level access controls
+
+- **Data Protection**
+  - Encrypt sensitive data at rest
+  - Implement field-level encryption for PII
+  - Use proper data retention policies
+  - Implement secure data deletion
+  - Regular security audits of data access
+
+### Infrastructure Security
+
+- **Environment Variables**
+  - Never commit secrets to version control
+  - Use environment-specific configuration
+  - Implement secret rotation policies
+  - Use secure secret management tools
+  - Validate environment on startup
+
+- **Docker Security**
+  - Use non-root users in containers
+  - Scan images for vulnerabilities
+  - Use minimal base images
+  - Implement container resource limits
+  - Use secrets management for containers
+
+- **Network Security**
+  - Implement network segmentation
+  - Use firewalls and security groups
+  - Monitor network traffic
+  - Implement DDoS protection
+  - Use VPN for admin access
+
+### Compliance & Standards
+
+- **OWASP Top 10 Compliance**
+  - Regular security assessments
+  - Implement security testing in CI/CD
+  - Use automated security scanning
+  - Maintain security documentation
+  - Train team on security best practices
+
+- **Security Headers**
+  - Implement comprehensive security headers
+  - Use Content Security Policy (CSP)
+  - Add X-Frame-Options, X-Content-Type-Options
+  - Implement Referrer Policy
+  - Use Permissions Policy for feature control
+
+- **Audit Logging**
+  - Log all authentication attempts
+  - Log authorization failures
+  - Log data access and modifications
+  - Implement tamper-proof logging
+  - Regular log analysis and monitoring
+
+### Error Handling & Monitoring
+
+- **Secure Error Responses**
+  - Never expose internal system details
+  - Use generic error messages for users
+  - Log detailed errors server-side only
+  - Implement proper error codes
+  - Handle errors gracefully
+
+- **Security Monitoring**
+  - Implement intrusion detection
+  - Monitor for suspicious activities
+  - Set up security alerts
+  - Regular security reviews
+  - Incident response procedures
+
+### Implementation Requirements
+
+- All endpoints must implement proper authentication
+- All CRUD operations must verify authorization
+- All user inputs must be validated and sanitized
+- All database queries must use parameterized statements
+- All sensitive data must be encrypted
+- All security events must be logged
+- All configurations must be environment-specific

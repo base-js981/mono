@@ -1,0 +1,97 @@
+---
+alwaysApply: true
+---
+
+## Database Rules (PostgreSQL + Prisma)
+
+### Core Stack
+
+- Use PostgreSQL as the primary database.
+- Use Prisma as the ORM and migration tool.
+- Prefer Prisma Client over raw SQL. If raw SQL is required, use `prisma.$queryRaw` with template literals for parameterization.
+
+### Schema Design & Conventions
+
+- Use singular PascalCase model names in Prisma schema (e.g., `User`, `Order`).
+- Use snake_case for actual PostgreSQL table/column names via `@@map`/`@map` as needed.
+- Add `id` as `String` (cuid/uuid) or `Int` (autoincrement) consistently project-wide.
+- Include timestamps on all entities: `createdAt` (default now) and `updatedAt` (updated via middleware).
+- Prefer soft deletes with `deletedAt` when business requires recovery; otherwise hard delete.
+- Use enums for finite sets; map to Postgres enums.
+- Define explicit relations with referential actions (e.g., `onDelete: Restrict | Cascade | SetNull`).
+
+### Migrations & Lifecycle
+
+- Use Prisma Migrate for all schema changes; never edit the database manually.
+- One migration per logical change; name migrations descriptively.
+- Require migrations to run in CI on a throwaway DB to validate.
+- Keep migrations immutable once merged; follow-up migrations for fixes.
+
+### Indexing & Performance
+
+- Define indexes for all foreign keys and high-selectivity lookup columns.
+- Add composite indexes for common filter/sort combinations.
+- Use unique indexes to enforce invariants at the database level.
+- Use pagination with `cursor` or `take`/`skip` bounded; avoid unbounded scans.
+- Avoid N+1 by batching with `prisma.$transaction`, `in` queries, or DataLoader patterns.
+- Monitor slow queries; add indexes or rewrite queries accordingly.
+
+### Transactions & Consistency
+
+- Use `prisma.$transaction` for multi-step writes that must be atomic.
+- Prefer interactive transactions when subsequent steps depend on previous results.
+- Keep transactions short; avoid external I/O inside transactions.
+- Choose appropriate referential actions to model domain invariants.
+
+### Connection Management
+
+- Use a connection pool via Prisma; configure pool size per environment.
+- Set query timeouts and log timeouts for investigation.
+- Enable SSL/TLS for all connections in non-local environments.
+
+### Security & Access Control
+
+- Use least-privilege DB users per environment; separate read/write if needed.
+- Rotate credentials regularly; store secrets in environment variables or a secret manager.
+- Never log secrets or full query contents with PII.
+- Validate and sanitize all inputs at the DTO layer before reaching persistence.
+
+### Data Protection
+
+- Encrypt sensitive fields at rest where required (field-level encryption service before persistence).
+- Hash passwords using bcrypt with >= 12 salt rounds (handled at service layer, never store plaintext).
+- Anonymize or pseudonymize data in non-production environments.
+
+### Multi-tenancy (if applicable)
+
+- Prefer tenant_id column strategy with row-level filtering.
+- Add composite indexes including `tenant_id`.
+- Ensure all queries are scoped by `tenant_id` in services.
+
+### Observability & Auditing
+
+- Add audit fields where required: `createdBy`, `updatedBy`.
+- Log write operations at the application layer with non-sensitive context.
+- Enable query logging in development; sample in production.
+
+### Testing & Seed Data
+
+- Use isolated test databases; reset with `prisma migrate reset`.
+- Provide deterministic seed scripts; avoid production-only data in seeds.
+
+### Backup & Restore
+
+- Configure automated daily backups with retention per compliance.
+- Test restore procedures periodically.
+
+### Usage Guidelines (Prisma)
+
+- Generate Prisma Client in build steps; commit `schema.prisma`, not the generated client.
+- Use select/include to fetch only necessary fields.
+- Prefer `upsert` for idempotent writes where applicable.
+- Avoid business logic in Prisma middleware; keep it thin (e.g., `updatedAt`).
+
+### Raw SQL (last resort)
+
+- Use only when Prisma cannot express the query efficiently.
+- Always parameterize via tagged template literals to avoid SQL injection.

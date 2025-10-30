@@ -1,0 +1,63 @@
+---
+alwaysApply: true
+---
+
+## Project Structure Rules
+
+### Overview
+
+- Single NestJS application in root directory.
+- Optionally evolve to monorepo with multiple apps; keep boundaries clean from the start.
+
+### Current Structure (Simple NestJS)
+
+- `src/`
+  - `main.ts`, `app.module.ts`, `app.controller.ts`, `app.service.ts`
+  - `modules/<feature>/` (optional - add when needed)
+    - `<feature>.module.ts`, `<feature>.controller.ts`, `<feature>.service.ts`
+    - `dtos/`, `entities/`, `providers/`
+  - `core/` (optional - global artifacts)
+    - `guards/`, `interceptors/`, `filters/`, `pipes/`, `middlewares/`
+  - `shared/` (optional - shared utilities)
+    - `utils/`, `adapters/`, `config/`
+  - `common/` (optional - common components)
+    - `constants/`, `decorators/`, `types/`
+  - `infra/` (optional - external integrations)
+    - `prisma/`, `cache/`, `mail/`
+- `test/`
+  - `app.e2e-spec.ts`, `jest-e2e.json`
+
+### Monorepo Structure (Future - if evolving)
+
+- `apps/api/src/` - API application
+- `apps/web/src/` - Web application (React + Refine + Chakra)
+- `prisma/` - Database schema and migrations
+  - `schema.prisma`, `migrations/`, `seed.ts`
+
+### Naming & Boundaries
+
+- PascalCase for classes; camelCase for variables/functions; kebab-case for files/dirs.
+- Do not import between features directly; share via `shared/` or `libs/`.
+- For monorepo: UI primitives must not depend on feature code.
+
+### Env & Configuration
+
+- Use `.env` files for environment variables; validate with schema on startup.
+- For monorepo: separate `.env` per app/environment.
+- Do not access `process.env` outside config modules/services.
+
+### Scripts & CI
+
+- Provide scripts: `build`, `start`, `test`, `lint`, `format`.
+- For monorepo: provide per-app scripts.
+- Enforce pre-commit hooks for lint and format.
+- Store coverage outputs; cache dependencies in CI.
+
+### Path Aliases (Future - when using monorepo)
+
+- Use `tsconfig.base.json` to declare `@api/*`, `@web/*`, `@shared/*`.
+- Align aliases in bundlers and tooling:
+  - ESLint: `settings.import/resolver` to read TS paths.
+  - Jest: map `moduleNameMapper` accordingly.
+- Keep folder names in sync with aliases to avoid drift.
+
