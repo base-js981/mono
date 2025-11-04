@@ -37,9 +37,12 @@ export class PoliciesService {
     return policy;
   }
 
-  async create(createPolicyDto: CreatePolicyDto, rules: any[]) {
-    const existing = await this.prisma.policy.findUnique({
-      where: { name: createPolicyDto.name },
+  async create(createPolicyDto: CreatePolicyDto, rules: any[], tenantId?: string | null) {
+    const existing = await this.prisma.policy.findFirst({
+      where: {
+        name: createPolicyDto.name,
+        tenantId: tenantId || null,
+      },
     });
 
     if (existing) {

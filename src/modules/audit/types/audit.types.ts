@@ -4,6 +4,7 @@ export interface AuditRecordInput {
   action: string;
   resource: string;
   resourceId?: string;
+  tenantId?: string;
   status: 'success' | 'fail';
   method?: string;
   path?: string;

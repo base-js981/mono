@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -196,8 +197,8 @@ export class PoliciesController {
       error: 'Bad Request'
     }
   })
-  async create(@Body() createPolicyDto: CreatePolicyDto) {
-    return this.policiesService.create(createPolicyDto, createPolicyDto.rules || []);
+  async create(@Body() createPolicyDto: CreatePolicyDto, @Request() req?: any) {
+    return this.policiesService.create(createPolicyDto, createPolicyDto.rules || [], req?.tenant?.id);
   }
 
   @Get()

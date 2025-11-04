@@ -120,7 +120,7 @@ export class AuthService {
     }
 
     const mainRole = user.userRoles?.[0]?.role?.name || 'USER';
-    const tokens = await this.generateTokens(user.id, user.email, mainRole);
+    const tokens = await this.generateTokens(user.id, user.email, mainRole, user.tenantId || undefined);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -246,7 +246,7 @@ export class AuthService {
       }
 
       const mainRole = user.userRoles?.[0]?.role?.name || 'USER';
-      const tokens = await this.generateTokens(user.id, user.email, mainRole);
+      const tokens = await this.generateTokens(user.id, user.email, mainRole, user.tenantId || undefined);
 
       await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -293,15 +293,19 @@ export class AuthService {
     userId: string,
     email: string,
     role: string,
+    tenantId?: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: userId, email, role };
+    const payload: any = { sub: userId, email, role };
+    if (tenantId) {
+      payload.tenantId = tenantId;
+    }
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload as any, {
+      this.jwtService.signAsync(payload, {
         secret: process.env.JWT_SECRET || 'default-secret-key',
         expiresIn: process.env.JWT_EXPIRATION_TIME || '15m',
       } as any),
-      this.jwtService.signAsync(payload as any, {
+      this.jwtService.signAsync(payload, {
         secret: process.env.JWT_REFRESH_SECRET || 'default-refresh-secret',
         expiresIn: '7d',
       } as any),

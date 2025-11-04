@@ -10,6 +10,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Tenants
+model Tenant {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  domain      String?   @unique // e.g., "tenant1.example.com"
+  isActive    Boolean   @default(true)
+  settings    Json?     // Tenant-specific settings
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  users       User[]
+  categories  Category[]
+  files       File[]
+  policies    Policy[]
+  auditLogs   AuditLog[]
+
+  @@index([slug])
+  @@index([domain])
+  @@index([isActive])
+  @@map("tenants")
+}
+
 model User {
   id              String    @id @default(cuid())
   email           String    @unique
@@ -19,7 +43,8 @@ model User {
   emailVerified   Boolean   @default(false)
   emailVerifiedAt DateTime?
   department      String? // ABAC attribute
-  tenantId        String? // ABAC attribute (multi-tenant)
+  tenantId        String? // Multi-tenant
+  tenant          Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   clearanceLevel  Int?      @default(1) // ABAC attribute
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -27,6 +52,7 @@ model User {
 
   userRoles               UserRole[]
   emailVerificationTokens EmailVerificationToken[]
+  uploadedFiles           File[]
 
   @@index([tenantId])
   @@index([department])
@@ -89,15 +115,19 @@ model UserRole {
 // Dynamic ABAC Policies
 model Policy {
   id          String   @id @default(cuid())
-  name        String   @unique
+  name        String
   description String?
   effect      String // 'allow' | 'deny'
   enabled     Boolean  @default(true)
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   rules PolicyRule[]
 
+  @@unique([name, tenantId])
+  @@index([tenantId])
   @@map("policies")
 }
 
@@ -123,6 +153,8 @@ model AuditLog {
   action       String
   resource     String
   resourceId   String?
+  tenantId     String?
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   status       String // success | fail
   method       String?
   path         String?
@@ -134,6 +166,7 @@ model AuditLog {
   createdAt    DateTime @default(now())
 
   @@index([actorId])
+  @@index([tenantId])
   @@index([action])
   @@index([resource])
   @@index([createdAt])
@@ -155,4 +188,51 @@ model EmailVerificationToken {
   @@index([token])
   @@index([expiresAt])
   @@map("email_verification_tokens")
+}
+
+// File Storage
+model File {
+  id             String    @id @default(cuid())
+  filename       String
+  storedFilename String
+  path           String
+  mimeType       String
+  size           Int
+  uploadedById   String
+  uploadedBy     User      @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  tenantId       String?
+  tenant         Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  @@index([uploadedById])
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("files")
+}
+
+// Categories
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryHierarchy")
+  tenantId    String?
+  tenant      Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([slug, tenantId])
+  @@index([parentId])
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("categories")
 }

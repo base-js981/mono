@@ -11,8 +11,13 @@ import { UsersModule } from './modules/users/users.module';
 import { AbacModule } from './modules/abac/abac.module';
 import { PoliciesModule } from './modules/policies/policies.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { FilesModule } from './modules/files/files.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { TenantsModule } from './modules/tenants/tenants.module';
+import { TenantModule } from './shared/tenant/tenant.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditInterceptor } from './modules/audit/audit.interceptor';
+import { TenantContextInterceptor } from './shared/tenant/tenant-context.interceptor';
 
 @Module({
   imports: [
@@ -30,6 +35,7 @@ import { AuditInterceptor } from './modules/audit/audit.interceptor';
       inject: [ConfigService],
     }),
     PrismaModule,
+    TenantModule,
     AuthModule,
     RolesModule,
     PermissionsModule,
@@ -37,10 +43,16 @@ import { AuditInterceptor } from './modules/audit/audit.interceptor';
     PoliciesModule,
     AbacModule,
     AuditModule,
+    FilesModule,
+    CategoriesModule,
+    TenantsModule,
   ],
-  controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TenantContextInterceptor,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditInterceptor,

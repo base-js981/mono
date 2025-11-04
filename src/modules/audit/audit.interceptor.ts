@@ -18,11 +18,14 @@ export class AuditInterceptor implements NestInterceptor {
     const method = req.method;
     const path = req.originalUrl || req.url;
     const user = req.user || {};
+    const tenant = req.tenant;
     const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
     const userAgent = req.headers['user-agent'] as string | undefined;
     const requestId = (req.headers['x-request-id'] as string) || undefined;
 
-    const shouldAudit = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+    const shouldAudit =
+      ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) ||
+      (method === 'GET' && path.includes('/download'));
     if (!shouldAudit) {
       return next.handle();
     }
@@ -43,6 +46,7 @@ export class AuditInterceptor implements NestInterceptor {
           action: resolved.action,
           resource: resolved.resource,
           resourceId: this.extractResourceId(path, data),
+          tenantId: tenant?.id,
           status: 'success',
           method,
           path,
@@ -59,6 +63,7 @@ export class AuditInterceptor implements NestInterceptor {
           action: resolved.action,
           resource: resolved.resource,
           resourceId: this.extractResourceId(path),
+          tenantId: tenant?.id,
           status: 'fail',
           method,
           path,
@@ -74,7 +79,13 @@ export class AuditInterceptor implements NestInterceptor {
   }
 
   private resolveActionAndResource(method: string, path: string, meta?: AuditMetaOptions) {
-    const httpToAction: Record<string, string> = { POST: 'create', PUT: 'update', PATCH: 'update', DELETE: 'delete' };
+    const httpToAction: Record<string, string> = {
+      POST: 'create',
+      PUT: 'update',
+      PATCH: 'update',
+      DELETE: 'delete',
+      GET: path.includes('/download') ? 'download' : 'read',
+    };
     const action = meta?.action ?? httpToAction[method] ?? method.toLowerCase();
     const resource = meta?.resource ?? this.inferResourceFromPath(path);
     return { action, resource };

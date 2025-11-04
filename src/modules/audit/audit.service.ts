@@ -15,6 +15,7 @@ export class AuditService {
         action: input.action,
         resource: input.resource,
         resourceId: input.resourceId ?? null,
+        tenantId: input.tenantId ?? null,
         status: input.status,
         method: input.method ?? null,
         path: input.path ?? null,
